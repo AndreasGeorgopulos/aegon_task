@@ -14,13 +14,6 @@ class LanguageBatchBo implements ISingleton
 	use TSingleton;
 
 	/**
-	 * Contains the applications which ones require translations.
-	 *
-	 * @var array
-	 */
-	protected array $applications = [];
-
-	/**
 	 * Starts the language file generation.
 	 *
 	 * @return void
@@ -28,18 +21,17 @@ class LanguageBatchBo implements ISingleton
 	 */
 	public function generateLanguageFiles()
 	{
-		// The applications where we need to translate.
-		$this->applications = Config::get('system.translated_applications');
-
 		echo "\nGenerating language files\n";
-		foreach ($this->applications as $application => $languages) {
+
+		// The applications where we need to translate.
+		foreach (Config::get('system.translated_applications') as $application => $languages) {
 			echo "[APPLICATION: " . $application . "]\n";
 			foreach ($languages as $language) {
 				if (!$this->getLanguageFile($application, $language)) {
 					throw new Exception('Unable to generate language file!');
 				}
 
-				echo "\t[LANGUAGE: " . $language . "]\n OK";
+				echo "\t[LANGUAGE: " . $language . "] OK\n";
 			}
 		}
 	}
@@ -62,8 +54,7 @@ class LanguageBatchBo implements ISingleton
 
 		foreach ($applets as $appletDirectory => $appletLanguageId) {
 			echo " Getting > $appletLanguageId ($appletDirectory) language xmls..\n";
-			$languages = $this->getAppletLanguages($appletLanguageId);
-			if (empty($languages)) {
+			if (!($languages = $this->getAppletLanguages($appletLanguageId))) {
 				throw new Exception('There is no available languages for the ' . $appletLanguageId . ' applet.');
 			}
 
@@ -97,34 +88,23 @@ class LanguageBatchBo implements ISingleton
 	 */
 	protected function getLanguageFile(string $application, string $language): bool
 	{
-		$languageResponse = ApiCall::call(
-			'system_api',
-			'language_api',
-			[
-				'system' => 'LanguageFiles',
-				'action' => 'getLanguageFile',
-			],
-			[
-				'language' => $language
-			],
-		);
-
 		try {
-			$this->checkForApiErrorResult($languageResponse);
+			$languageResponse = $this->callApiCall('getLanguageFile', ['language' => $language]);
+
+			// If we got correct data we store it.
+			$destination = $this->getLanguageCachePath($application) . $language . '.php';
+
+			// If there is no folder yet, we'll create it.
+			echo "$destination\n";
+			if (!is_dir(dirname($destination))) {
+				mkdir(dirname($destination), 0755, true);
+			}
+
+			$result = file_put_contents($destination, $languageResponse['data']);
 		}
 		catch (Exception $e) {
 			throw new Exception('Error during getting language file: (' . $application . '/' . $language . ')');
 		}
-
-		// If we got correct data we store it.
-		$destination = $this->getLanguageCachePath($application) . $language . '.php';
-		// If there is no folder yet, we'll create it.
-		var_dump($destination);
-		if (!is_dir(dirname($destination))) {
-			mkdir(dirname($destination), 0755, true);
-		}
-
-		$result = file_put_contents($destination, $languageResponse['data']);
 
 		return (bool)$result;
 	}
@@ -151,20 +131,8 @@ class LanguageBatchBo implements ISingleton
 	 */
 	protected function getAppletLanguages(string $applet): array
 	{
-		$result = ApiCall::call(
-			'system_api',
-			'language_api',
-			[
-				'system' => 'LanguageFiles',
-				'action' => 'getAppletLanguages',
-			],
-			[
-				'applet' => $applet,
-			]
-		);
-
 		try {
-			$this->checkForApiErrorResult($result);
+			$result = $this->callApiCall('getAppletLanguages', ['applet' => $applet]);
 		}
 		catch (Exception $e) {
 			throw new Exception('Getting languages for applet (' . $applet . ') was unsuccessful ' . $e->getMessage());
@@ -172,7 +140,6 @@ class LanguageBatchBo implements ISingleton
 
 		return $result['data'];
 	}
-
 
 	/**
 	 * Gets a language xml for an applet.
@@ -185,21 +152,8 @@ class LanguageBatchBo implements ISingleton
 	 */
 	protected function getAppletLanguageFile(string $applet, string $language)
 	{
-		$result = ApiCall::call(
-			'system_api',
-			'language_api',
-			[
-				'system' => 'LanguageFiles',
-				'action' => 'getAppletLanguageFile',
-			],
-			[
-				'applet' => $applet,
-				'language' => $language
-			]
-		);
-
 		try {
-			$this->checkForApiErrorResult($result);
+			$result = $this->callApiCall('getAppletLanguageFile', ['applet' => $applet, 'language' => $language]);
 		}
 		catch (Exception $e) {
 			throw new Exception('Getting language xml for applet: (' . $applet . ') on language: (' . $language . ') was unsuccessful: '
@@ -235,5 +189,23 @@ class LanguageBatchBo implements ISingleton
 		if ($result['data'] === false) {
 			throw new Exception('Wrong content!');
 		}
+	}
+
+	/**
+	 * Calls the api call and checks the result.
+	 *
+	 * @param string $action
+	 * @param array $postParameters
+	 * @param string $target
+	 * @param string $mode
+	 * @param string $system
+	 * @return array|null
+	 * @throws Exception
+	 */
+	protected function callApiCall(string $action, array $postParameters, string $target = 'system_api', string $mode = 'language_api', string $system = 'LanguageFiles'): ?array
+	{
+		$response = ApiCall::call($target, $mode, ['system' => $system, 'action' => $action], $postParameters);
+		$this->checkForApiErrorResult($response);
+		return $response;
 	}
 }
