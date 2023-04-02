@@ -20,6 +20,7 @@ class LanguageBatchBo
 	 * Starts the language file generation.
 	 *
 	 * @return void
+	 * @throws Exception
 	 */
 	public static function generateLanguageFiles()
 	{
@@ -44,16 +45,14 @@ class LanguageBatchBo
 	/**
 	 * Gets the language file for the given language and stores it.
 	 *
-	 * @param string $application   The name of the application.
-	 * @param string $language      The identifier of the language.
-	 *
-	 * @throws CurlException   If there was an error during the download of the language file.
+	 * @param string $application The name of the application.
+	 * @param string $language The identifier of the language.
 	 *
 	 * @return bool   The success of the operation.
+	 * @throws Exception
 	 */
-	protected static function getLanguageFile($application, $language)
+	protected static function getLanguageFile(string $application, string $language): bool
 	{
-		$result = false;
 		$languageResponse = ApiCall::call(
 			'system_api',
 			'language_api',
@@ -93,7 +92,7 @@ class LanguageBatchBo
 	 *
 	 * @return string   The directory of the cached language files.
 	 */
-	protected static function getLanguageCachePath($application)
+	protected static function getLanguageCachePath(string $application): string
 	{
 		return Config::get('system.paths.root') . '/cache/' . $application. '/';
 	}
@@ -144,11 +143,12 @@ class LanguageBatchBo
 	/**
 	 * Gets the available languages for the given applet.
 	 *
-	 * @param string $applet   The applet identifier.
+	 * @param string $applet The applet identifier.
 	 *
 	 * @return array   The list of the available applet languages.
+	 * @throws Exception
 	 */
-	protected static function getAppletLanguages($applet)
+	protected static function getAppletLanguages(string $applet): array
 	{
 		$result = ApiCall::call(
 			'system_api',
@@ -176,12 +176,13 @@ class LanguageBatchBo
 	/**
 	 * Gets a language xml for an applet.
 	 *
-	 * @param string $applet      The identifier of the applet.
-	 * @param string $language    The language identifier.
+	 * @param string $applet The identifier of the applet.
+	 * @param string $language The language identifier.
 	 *
 	 * @return string|false   The content of the language file or false if weren't able to get it.
+	 * @throws Exception
 	 */
-	protected static function getAppletLanguageFile($applet, $language)
+	protected static function getAppletLanguageFile(string $applet, string $language)
 	{
 		$result = ApiCall::call(
 			'system_api',
