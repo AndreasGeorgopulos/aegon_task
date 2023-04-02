@@ -35,13 +35,11 @@ class LanguageBatchBo implements ISingleton
 		foreach ($this->applications as $application => $languages) {
 			echo "[APPLICATION: " . $application . "]\n";
 			foreach ($languages as $language) {
-				echo "\t[LANGUAGE: " . $language . "]";
-				if ($this->getLanguageFile($application, $language)) {
-					echo " OK\n";
-				}
-				else {
+				if (!$this->getLanguageFile($application, $language)) {
 					throw new Exception('Unable to generate language file!');
 				}
+
+				echo "\t[LANGUAGE: " . $language . "]\n OK";
 			}
 		}
 	}
@@ -68,20 +66,19 @@ class LanguageBatchBo implements ISingleton
 			if (empty($languages)) {
 				throw new Exception('There is no available languages for the ' . $appletLanguageId . ' applet.');
 			}
-			else {
-				echo ' - Available languages: ' . implode(', ', $languages) . "\n";
-			}
+
+			echo ' - Available languages: ' . implode(', ', $languages) . "\n";
+
 			$path = Config::get('system.paths.root') . '/cache/flash';
 			foreach ($languages as $language) {
 				$xmlContent = $this->getAppletLanguageFile($appletLanguageId, $language);
 				$xmlFile    = $path . '/lang_' . $language . '.xml';
-				if (strlen($xmlContent) == file_put_contents($xmlFile, $xmlContent)) {
-					echo " OK saving $xmlFile was successful.\n";
-				}
-				else {
+				if (strlen($xmlContent) != file_put_contents($xmlFile, $xmlContent)) {
 					throw new Exception('Unable to save applet: (' . $appletLanguageId . ') language: (' . $language
 						. ') xml (' . $xmlFile . ')!');
 				}
+
+				echo " OK saving $xmlFile was successful.\n";
 			}
 			echo " < $appletLanguageId ($appletDirectory) language xml cached.\n";
 		}
