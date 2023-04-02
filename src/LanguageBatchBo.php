@@ -2,6 +2,8 @@
 
 namespace Language;
 
+use Exception;
+
 /**
  * Business logic related to generating language files.
  */
@@ -33,7 +35,7 @@ class LanguageBatchBo
 					echo " OK\n";
 				}
 				else {
-					throw new \Exception('Unable to generate language file!');
+					throw new Exception('Unable to generate language file!');
 				}
 			}
 		}
@@ -67,8 +69,8 @@ class LanguageBatchBo
 		try {
 			self::checkForApiErrorResult($languageResponse);
 		}
-		catch (\Exception $e) {
-			throw new \Exception('Error during getting language file: (' . $application . '/' . $language . ')');
+		catch (Exception $e) {
+			throw new Exception('Error during getting language file: (' . $application . '/' . $language . ')');
 		}
 
 		// If we got correct data we store it.
@@ -116,7 +118,7 @@ class LanguageBatchBo
 			echo " Getting > $appletLanguageId ($appletDirectory) language xmls..\n";
 			$languages = self::getAppletLanguages($appletLanguageId);
 			if (empty($languages)) {
-				throw new \Exception('There is no available languages for the ' . $appletLanguageId . ' applet.');
+				throw new Exception('There is no available languages for the ' . $appletLanguageId . ' applet.');
 			}
 			else {
 				echo ' - Available languages: ' . implode(', ', $languages) . "\n";
@@ -129,7 +131,7 @@ class LanguageBatchBo
 					echo " OK saving $xmlFile was successful.\n";
 				}
 				else {
-					throw new \Exception('Unable to save applet: (' . $appletLanguageId . ') language: (' . $language
+					throw new Exception('Unable to save applet: (' . $appletLanguageId . ') language: (' . $language
 						. ') xml (' . $xmlFile . ')!');
 				}
 			}
@@ -163,8 +165,8 @@ class LanguageBatchBo
 		try {
 			self::checkForApiErrorResult($result);
 		}
-		catch (\Exception $e) {
-			throw new \Exception('Getting languages for applet (' . $applet . ') was unsuccessful ' . $e->getMessage());
+		catch (Exception $e) {
+			throw new Exception('Getting languages for applet (' . $applet . ') was unsuccessful ' . $e->getMessage());
 		}
 
 		return $result['data'];
@@ -197,8 +199,8 @@ class LanguageBatchBo
 		try {
 			self::checkForApiErrorResult($result);
 		}
-		catch (\Exception $e) {
-			throw new \Exception('Getting language xml for applet: (' . $applet . ') on language: (' . $language . ') was unsuccessful: '
+		catch (Exception $e) {
+			throw new Exception('Getting language xml for applet: (' . $applet . ') on language: (' . $language . ') was unsuccessful: '
 				. $e->getMessage());
 		}
 
@@ -218,18 +220,18 @@ class LanguageBatchBo
 	{
 		// Error during the api call.
 		if ($result === false || !isset($result['status'])) {
-			throw new \Exception('Error during the api call');
+			throw new Exception('Error during the api call');
 		}
 		// Wrong response.
 		if ($result['status'] != 'OK') {
-			throw new \Exception('Wrong response: '
+			throw new Exception('Wrong response: '
 				. (!empty($result['error_type']) ? 'Type(' . $result['error_type'] . ') ' : '')
 				. (!empty($result['error_code']) ? 'Code(' . $result['error_code'] . ') ' : '')
 				. ((string)$result['data']));
 		}
 		// Wrong content.
 		if ($result['data'] === false) {
-			throw new \Exception('Wrong content!');
+			throw new Exception('Wrong content!');
 		}
 	}
 }
